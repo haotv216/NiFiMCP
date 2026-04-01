@@ -146,8 +146,15 @@ class NiFiClient:
                 # If endpoint doesn't exist (NiFi 1.x) or requires auth (401), assume username/password auth
                 if e.response.status_code in (404, 401):
                     # 404 = endpoint doesn't exist (NiFi 1.x)
-                    # 401 = endpoint requires authentication (NiFi 1.x or 2.x with auth required)
-                    # In both cases, assume we can use username/password authentication
+                    # Try fallback to /access/config
+                    try:
+                        resp2 = await client.get("/access/config")
+                        if resp2.status_code == 200:
+                            cfg = resp2.json().get("config", {})
+                            self._auth_config = {"authenticationConfiguration": {"externalLoginRequired": False, "loginSupported": cfg.get("supportsLogin", True)}}
+                            return self._auth_config
+                    except Exception as e2:
+                        pass
                     self._auth_config = {"authenticationConfiguration": {"externalLoginRequired": False, "loginSupported": True}}
                     return self._auth_config
                 raise NiFiAuthenticationError(f"Failed to get auth config: {e.response.status_code}") from e
@@ -303,6 +310,12 @@ class NiFiClient:
         external_login_required = auth_config_data.get("externalLoginRequired", False)
         login_supported = auth_config_data.get("loginSupported", True)
         
+        if not external_login_required and not login_supported:
+            logger.info(f"NiFi server at {self.base_url} does not require authentication.")
+            self._token = ""
+            self._token_from_oidc = False
+            return
+
         if external_login_required:
             # OIDC/OAuth2 authentication required
             logger.info(f"NiFi server requires OIDC/OAuth2 authentication (server_id: {server_id})")
