@@ -1,33 +1,33 @@
 ---
-description: Quy trình chuẩn (Workflow) khi tương tác, xây dựng và cập nhật luồng trên Apache NiFi
+description: Standard operating procedure (Workflow) for interacting with, building, and updating Apache NiFi flows
 ---
 
 # NiFi Development Workflow
 
-Workflow này định hình các bước tiêu chuẩn để hệ thống Agent làm việc với Apache NiFi thông qua MCP server một cách an toàn, chính xác và luôn bám sát convention hiện có của hệ thống người dùng. Workflow này có thể được kích hoạt tự động nếu người dùng có nhu cầu xử lý các luồng NiFi.
+This workflow defines the standard steps for the Agent to interact with Apache NiFi via the MCP Server safely, accurately, and in strict adherence to the user's existing system conventions. This workflow should be automatically triggered whenever the user requests operations on NiFi flows.
 
-## Bước 1: Khảo sát và Đọc hiểu luồng (Discovery & Understand)
-- Dùng công cụ `search_nifi_flow` hoặc `get_flow_outline` để định vị chính xác **Process Group** mà người dùng yêu cầu dựa trên Tên hoặc UUID.
-- Sử dụng `document_nifi_flow` để đọc toàn bộ kiến trúc bên trong (bao gồm Processors, Connections, Ports, Controller Services, **tiến hành đối chiếu cả các Variables được định nghĩa ở cấp độ Process Group**).
-- Phân tích và tóm tắt lại **luồng nghiệp vụ (business logic)**, cấu hình property, **danh sách các Variables** và các biểu thức (Expression Language - EL) đang sử dụng để hiểu rõ mục đích của luồng hiện tại.
+## Step 1: Discovery & Understand
+- Utilize the `search_nifi_flow` or `get_flow_outline` tools to accurately locate the target **Process Group** based on its Name or UUID as requested by the user.
+- Use `document_nifi_flow` to extract and inspect the entire internal architecture (including Processors, Connections, Ports, Controller Services, and **specifically cross-check any Variables defined at the Process Group level**).
+- Analyze and summarize the **business logic**, property configurations, **Variables list**, and Expression Language (EL) statements to gain a complete understanding of the flow's purpose.
 
-## Bước 2: Phân tích Convention & Môi trường (Convention Analysis)
-- Trích xuất các khuôn mẫu (convention) định danh đang được dùng trong Process Group (ví dụ: nguyên tắc đặt tên Processor, cấu hình Auto-Terminate đối với Connection dư thừa, cách sử dụng Funnel, cách truyền Payload, Auth Context, cấu hình Retries...).
-- Trích xuất môi trường (URL Pattern, cấu trúc đường dẫn API được định nghĩa sẵn, **các Variables dùng chung được khai báo từ trước**).
-- Đối chiếu những convention và Variables này làm cơ sở thiết kế cho phần xây dựng/cập nhật luồng tiếp theo.
+## Step 2: Convention Analysis & Environment
+- Extract naming and architectural conventions used within the Process Group (e.g., Processor naming conventions, Auto-Terminate configurations for unused Connections, usage of Funnels, Payload structures, Auth Contexts, Retry configurations).
+- Extract environmental configurations (URL Patterns, standard API path structures, and **globally declared Variables**).
+- Cross-reference these conventions and Variables to serve as the design foundation for building or updating the flow.
 
-## Bước 3: Đề xuất & Xây dựng luồng (Implementation)
-- Lên kế hoạch chi tiết (Implementation Plan) trước khi gọi API tạo luồng. Chú ý lên danh sách **các Variables** bắt buộc phải được gán/kế thừa cho Process Group đích, đảm bảo các hàm Expression Language không bị lỗi khi thực thi.
-- Cân nhắc **lưu snapshot dự phòng (Backup)** kiến trúc gốc nếu thực hiện các update/delete diện rộng.
-- Chạy các công cụ tạo luồng (`create_nifi_process_group`, `create_nifi_processors`, `create_nifi_connections`...) để xây dựng luồng mới hoặc cập nhật luồng cũ **tuân thủ tuyệt đối** các convention đã phân tích.
-- Việc tạo mới / sửa đổi chỉ được áp dụng **cách thức hoàn toàn mới (custom approach)** khi và chỉ khi hệ thống hiện tại chưa từng có convention nào giải quyết được case/yêu cầu đó.
+## Step 3: Implementation
+- Formulate a detailed Implementation Plan before calling any flow creation API. Ensure you list **any required Variables** that must be assigned or inherited by the target Process Group to prevent Expression Language evaluation errors.
+- Consider **taking a backup snapshot** of the original architecture if performing large-scale updates or deletions.
+- Execute flow creation tools (`create_nifi_process_group`, `create_nifi_processors`, `create_nifi_connections`, etc.) to build new flows or update existing ones in **strict adherence** to the conventions analyzed in Step 2.
+- A **custom approach** (creating net-new structures/methodologies) should only be applied if and only if the current system lacks any existing conventions to handle the user's specific use case.
 
-## Bước 4: Tự động sắp xếp giao diện (Auto-Layout)
+## Step 4: Auto-Layout
 // turbo
-- Chạy công cụ `layout_nifi_process_group` ngay sau khi tạo / copy hoặc kết nối thành công các components. Bước này vô cùng quan trọng để hệ thống lưới (Canvas) NiFi không bị đè chéo component lên nhau, đảm bảo UI sạch đẹp và dễ maintain cho kỹ sư vận hành.
+- Execute the `layout_nifi_process_group` tool immediately after successfully creating, copying, or connecting components. This step is strictly required to ensure the NiFi Canvas does not have overlapping components, keeping the UI clean, structured, and easy to maintain for operational engineers.
 
-## Bước 5: Kiểm tra và Gỡ lỗi (Validation & Debugging)
-- Sử dụng `get_process_group_status` hoặc `analyze_nifi_processor_errors` để kiểm tra trạng thái Health (sức khỏe) của luồng và hàng đợi ngay sau khi đã tạo/sửa.
-- Đảm bảo tất cả các processors ở trạng thái `VALID`. Đặc biệt **kiểm tra chéo lại các Process Group Variables** xem có biến Expression nào gọi ra mà chưa được định nghĩa (hiện cảnh báo thiếu biến).
-- Nếu phát báo lỗi `INVALID` (ví dụ: Relationship chưa kết nối, thiếu properties bắt buộc, undefined variable), hãy tự động đọc lỗi, tiến hành debug và tự động gỡ lỗi (fix).
-- Gửi báo cáo nghiệm thu dạng Markdown ngắn gọn cho người dùng, liệt kê thay đổi hoặc các cấu hình Variables đã can thiệp, cùng danh sách các lỗi đã được sửa triệt để (nếu có).
+## Step 5: Validation & Debugging
+- Use `get_process_group_status` or `analyze_nifi_processor_errors` to check the Health status and queue size of the flow immediately after creation or modification.
+- Ensure all processors are in a `VALID` state. Specifically, **cross-check Process Group Variables** to confirm no Expression Language references an undefined variable (which would trigger a missing variable warning).
+- If an `INVALID` error is reported (e.g., disconnected Relationships, missing mandatory properties, undefined variables), automatically read the error, initiate debugging, and auto-fix the issue.
+- Deliver a concise Markdown acceptance report to the user, listing the changes made, Variable configurations applied, and a summary of any errors that were completely resolved.
