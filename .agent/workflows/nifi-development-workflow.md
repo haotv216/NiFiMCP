@@ -16,18 +16,18 @@ This workflow defines the standard steps for the Agent to interact with Apache N
 - Extract environmental configurations (URL Patterns, standard API path structures, and **globally declared Variables**).
 - Cross-reference these conventions and Variables to serve as the design foundation for building or updating the flow.
 
-## Step 3: Implementation
-- Formulate a detailed Implementation Plan before calling any flow creation API. Ensure you list **any required Variables** that must be assigned or inherited by the target Process Group to prevent Expression Language evaluation errors.
-- Consider **taking a backup snapshot** of the original architecture if performing large-scale updates or deletions.
-- Execute flow creation tools (`create_nifi_process_group`, `create_nifi_processors`, `create_nifi_connections`, etc.) to build new flows or update existing ones in **strict adherence** to the conventions analyzed in Step 2.
-- A **custom approach** (creating net-new structures/methodologies) should only be applied if and only if the current system lacks any existing conventions to handle the user's specific use case.
+## Step 3: Implementation Guide
+- Formulate a **detailed, step-by-step Implementation Guide** for the user in Markdown format.
+- DO NOT use flow creation tools (e.g., `create_nifi_process_group`, `create_nifi_processors`, `create_nifi_connections`).
+- Ensure the guide specifies exactly:
+  1. The Processors the user needs to add on the NiFi UI (with their specific class Types).
+  2. The exact Properties and Expression Language (EL) variables to configure for each Processor.
+  3. The exact Relationships for Connections (Success, Failure, etc.) and what should be Auto-Terminated.
+  4. Any required Process Group Variables that must be added.
+- Wait for the user to confirm they have manually completed the configuration on the NiFi Canvas.
 
-## Step 4: Auto-Layout
-// turbo
-- Execute the `layout_nifi_process_group` tool immediately after successfully creating, copying, or connecting components. This step is strictly required to ensure the NiFi Canvas does not have overlapping components, keeping the UI clean, structured, and easy to maintain for operational engineers.
-
-## Step 5: Validation & Debugging
-- Use `get_process_group_status` or `analyze_nifi_processor_errors` to check the Health status and queue size of the flow immediately after creation or modification.
+## Step 4: Validation & Debugging
+- After the user confirms they have manually created/updated the flow, use `get_process_group_status` or `analyze_nifi_processor_errors` to check the Health status and queue size of the modified flow.
 - Ensure all processors are in a `VALID` state. Specifically, **cross-check Process Group Variables** to confirm no Expression Language references an undefined variable (which would trigger a missing variable warning).
-- If an `INVALID` error is reported (e.g., disconnected Relationships, missing mandatory properties, undefined variables), automatically read the error, initiate debugging, and auto-fix the issue.
-- Deliver a concise Markdown acceptance report to the user, listing the changes made, Variable configurations applied, and a summary of any errors that were completely resolved.
+- If an `INVALID` error is reported (e.g., disconnected Relationships, missing mandatory properties, undefined variables), automatically read the error and instruct the user on how to fix it via the UI.
+- Deliver a concise Markdown acceptance report to the user, listing a summary of validations and any errors that were completely resolved.
