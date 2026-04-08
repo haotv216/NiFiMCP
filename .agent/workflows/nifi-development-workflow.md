@@ -24,6 +24,8 @@ This workflow defines the standard steps for the Agent to interact with Apache N
   2. The exact Properties and Expression Language (EL) variables to configure for each Processor.
   3. The exact Relationships for Connections (Success, Failure, etc.) and what should be Auto-Terminated.
   4. Any required Process Group Variables that must be added.
+  5. **Identify any potential infinite data loops** in the proposed flow (e.g., due to cyclic connections or self-referential failure routes).
+  6. **Proactively provide explicit solutions** to prevent data loops (e.g., implementing UpdateAttribute retry counters, using RouteOnAttribute for max retry limits, or applying Penalize mechanisms).
 - Wait for the user to confirm they have manually completed the configuration on the NiFi Canvas.
 
 ## Step 4: Validation & Debugging
