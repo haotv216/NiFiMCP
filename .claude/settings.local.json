@@ -5,7 +5,11 @@
       "Bash(sed 's/.*def //')",
       "Bash(sed 's/\\(.*//')",
       "Bash(grep -A1 \"^\\\\s*@mcp\\\\.tool\" /c/Users/haoto/OneDrive/Desktop/NiFiMCP/nifi_mcp_server/api_tools/*.py)",
-      "Bash(awk '/^async def.*\\\\\\(/ && prev ~ /@mcp\\\\.tool/ {print} {prev=$0}' /c/Users/haoto/OneDrive/Desktop/NiFiMCP/nifi_mcp_server/api_tools/review.py)"
+      "Bash(awk '/^async def.*\\\\\\(/ && prev ~ /@mcp\\\\.tool/ {print} {prev=$0}' /c/Users/haoto/OneDrive/Desktop/NiFiMCP/nifi_mcp_server/api_tools/review.py)",
+      "mcp__nifi__list_nifi_objects",
+      "mcp__nifi__get_nifi_session_info",
+      "mcp__nifi__set_nifi_server",
+      "mcp__nifi__get_flow_outline"
     ]
   }
 }
